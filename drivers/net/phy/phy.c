@@ -540,6 +540,9 @@ int phy_init(void)
 #ifdef CONFIG_PHY_FIXED
 	phy_fixed_init();
 #endif
+#ifdef CONFIG_PHY_NCSI
+	phy_ncsi_init();
+#endif
 	return 0;
 }
 
@@ -956,6 +959,10 @@ struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 
 #ifdef CONFIG_PHY_FIXED
 	phydev = phy_connect_fixed(bus, dev, interface);
+#endif
+
+#ifdef CONFIG_PHY_NCSI
+	phydev = phy_device_create(bus, 0, PHY_NCSI_ID, interface);
 #endif
 
 	if (!phydev)
