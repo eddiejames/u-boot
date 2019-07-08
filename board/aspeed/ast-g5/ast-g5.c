@@ -8,9 +8,11 @@
  */
 
 #include <common.h>
+#include <mmc.h>
 #include <netdev.h>
 
 #include <asm/arch/ast_scu.h>
+#include <asm/arch/ast_sdhci.h>
 #include <asm/arch/ast-sdmc.h>
 #include <asm/io.h>
 
@@ -44,6 +46,13 @@ int board_eth_init(bd_t *bd)
 int board_eth_init(bd_t *bd)
 {
         return aspeednic_initialize(bd);
+}
+#endif
+
+#ifdef CONFIG_MMC
+int board_mmc_init(bd_t *bd)
+{
+	return ast_sdhci_init();
 }
 #endif
 

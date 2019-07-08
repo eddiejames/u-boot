@@ -14,6 +14,7 @@ obj-$(CONFIG_GENERIC_MMC) += mmc_legacy.o
 endif
 
 obj-$(CONFIG_ARM_PL180_MMCI) += arm_pl180_mmci.o
+obj-$(CONFIG_AST_SDHCI) += ast_sdhci.o
 obj-$(CONFIG_ATMEL_SDHCI) += atmel_sdhci.o
 obj-$(CONFIG_BCM2835_SDHCI) += bcm2835_sdhci.o
 obj-$(CONFIG_BFIN_SDH) += bfin_sdh.o

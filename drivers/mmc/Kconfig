@@ -34,6 +34,15 @@ config ROCKCHIP_DWMMC
 	  SD 3.0, SDIO 3.0 and MMC 4.5 and supports common eMMC chips as well
 	  as removeable SD and micro-SD cards.
 
+config AST_SDHCI
+	bool "Aspeed SDHCI controller"
+	depends on ARCH_ASPEED
+	help
+	  Enables support for the Aspeed SDHCI 2.0 controller present on Aspeed
+	  SoCs. This device is compatible with SD 3.0 and/or MMC 4.3
+	  specifications. On the AST2600, the device is also compatible with
+	  MMC 5.1 and eMMC 3.0.
+
 config SH_SDHI
 	bool "SuperH/Renesas ARM SoCs on-chip SDHI host controller support"
 	depends on RMOBILE

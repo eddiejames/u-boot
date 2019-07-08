@@ -84,6 +84,14 @@
 #define CONFIG_SYS_MAXARGS		16
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
+/* Optional MMC support */
+#ifdef CONFIG_CMD_MMC
+#define CONFIG_MMC
+#define CONFIG_GENERIC_MMC
+#define CONFIG_SDHCI
+#define CONFIG_AST_SDHCI
+#endif
+
 /*
  * Optional MTD and UBI support
  */
