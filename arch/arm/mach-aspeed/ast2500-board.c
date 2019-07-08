@@ -7,6 +7,7 @@
 #include <ram.h>
 #include <timer.h>
 #include <asm/io.h>
+#include <asm/arch/ast_sdhci.h>
 #include <asm/arch/timer.h>
 #include <asm/arch/wdt.h>
 #include <linux/err.h>
@@ -55,6 +56,9 @@ int board_init(void)
 {
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 
+#ifdef CONFIG_MMC_SDHCI_ASPEED
+	ast_sdhci_init();
+#endif
 	return 0;
 }
 
