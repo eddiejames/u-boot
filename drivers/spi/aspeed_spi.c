@@ -30,7 +30,7 @@ struct aspeed_spi_flash {
 	u32		ce_ctrl_fread;	/* CE Control Register for FREAD mode */
 	u32		iomode;
 
-	struct spi_flash *spi;		/* Associated SPI Flash device */
+	struct spi_nor *spi;		/* Associated SPI Flash device */
 };
 
 struct aspeed_spi_priv {
@@ -367,9 +367,9 @@ static ssize_t aspeed_spi_read_user(struct aspeed_spi_priv *priv,
 
 	/* cmd buffer = cmd + addr + dummies */
 	aspeed_spi_send_cmd_addr(priv, flash, cmdbuf,
-				 cmdlen - flash->spi->dummy_byte);
+				 cmdlen - flash->spi->read_dummy);
 
-	for (i = 0 ; i < flash->spi->dummy_byte; i++)
+	for (i = 0 ; i < flash->spi->read_dummy; i++)
 		aspeed_spi_write_to_ahb(flash->ahb_base, &dummy, 1);
 
 	if (flash->iomode) {
@@ -424,7 +424,7 @@ static ssize_t aspeed_spi_read(struct aspeed_spi_priv *priv,
 {
 	/* cmd buffer = cmd + addr + dummies */
 	u32 offset = aspeed_spi_flash_to_addr(flash, cmdbuf,
-					      cmdlen - flash->spi->dummy_byte);
+					      cmdlen - flash->spi->read_dummy);
 
 	/*
 	 * Switch to USER command mode if the AHB window configured
@@ -590,9 +590,9 @@ static int aspeed_spi_flash_init(struct aspeed_spi_priv *priv,
 	      flash->cs,
 	      spi_flash->name, spi_flash->flags, spi_flash->size,
 	      spi_flash->page_size, spi_flash->sector_size,
-	      spi_flash->erase_size, spi_flash->erase_cmd,
-	      spi_flash->read_cmd, spi_flash->write_cmd,
-	      spi_flash->dummy_byte);
+	      spi_flash->erase_size, spi_flash->erase_opcode,
+	      spi_flash->read_opcode, spi_flash->program_opcode,
+	      spi_flash->read_dummy);
 
 	flash->spi = spi_flash;
 
@@ -620,8 +620,8 @@ static int aspeed_spi_flash_init(struct aspeed_spi_priv *priv,
 
 	flash->ce_ctrl_fread = CE_CTRL_CLOCK_FREQ(read_hclk) |
 		flash->iomode |
-		CE_CTRL_CMD(flash->spi->read_cmd) |
-		CE_CTRL_DUMMY(flash->spi->dummy_byte) |
+		CE_CTRL_CMD(flash->spi->read_opcode) |
+		CE_CTRL_DUMMY(flash->spi->read_dummy) |
 		CE_CTRL_FREADMODE;
 
 	debug("CS%u: USER mode 0x%08x FREAD mode 0x%08x\n", flash->cs,
