@@ -4,6 +4,7 @@
  */
 #include <common.h>
 #include <dm.h>
+#include <mmc.h>
 #include <ram.h>
 #include <timer.h>
 #include <asm/io.h>
@@ -54,6 +55,8 @@ void lowlevel_init(void)
 int board_init(void)
 {
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
+
+	mmc_initialize(gd->bd);
 
 	return 0;
 }
