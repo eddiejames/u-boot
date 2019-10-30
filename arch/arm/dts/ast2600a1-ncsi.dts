@@ -257,3 +257,11 @@
 	status = "okay";
 };
 #endif
+
+&fsim0 {
+	status = "okay";
+};
+
+&fsim1 {
+	status = "okay";
+};
