@@ -11,6 +11,7 @@
 
 #include <asm/arch/platform.h>
 
+#define CONFIG_SUPPORT_EMMC_BOOT	1
 #define CONFIG_BOOTFILE		"all.bin"
 
 #define CONFIG_GATEWAYIP	192.168.0.1
