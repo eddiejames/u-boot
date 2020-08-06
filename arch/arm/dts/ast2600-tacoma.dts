@@ -86,3 +86,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_emmc_default>;
 };
+
+&i2c1 {
+	status = "okay";
+
+	tpm: tpm@2e {
+		compatible = "nuvoton,npct75x";
+		reg = <0x2e>;
+	};
+};

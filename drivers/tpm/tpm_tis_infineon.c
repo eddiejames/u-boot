@@ -35,6 +35,7 @@
 enum i2c_chip_type {
 	SLB9635,
 	SLB9645,
+	NPCT75X,
 	UNKNOWN,
 };
 
@@ -45,14 +46,34 @@ enum i2c_chip_type {
 static const char * const chip_name[] = {
 	[SLB9635] = "slb9635tt",
 	[SLB9645] = "slb9645tt",
+	[NPCT75X] = "npct75x",
 	[UNKNOWN] = "unknown/fallback to slb9635",
 };
 
+#define TPM_LOC_SEL				0x04
 #define	TPM_ACCESS(l)			(0x0000 | ((l) << 4))
-#define	TPM_STS(l)			(0x0001 | ((l) << 4))
+#define	TPM_STS(l)				(0x0001 | ((l) << 4))
 #define	TPM_DATA_FIFO(l)		(0x0005 | ((l) << 4))
 #define	TPM_DID_VID(l)			(0x0006 | ((l) << 4))
+#define TPM_RID(l)				(0x0f04 | ((l) << 12))
 
+static u8 npct75x_addr(u16 addr)
+{
+	addr &= 0xFFF;
+
+	switch (addr) {
+	case TPM_ACCESS(0):
+		return 0x04;
+	case TPM_LOC_SEL:
+		return 0;
+	case TPM_DID_VID(0):
+		return 0x48;
+	case TPM_RID(0):
+		return 0x4c;
+	default:
+		return addr;
+	}
+}
 /*
  * tpm_tis_i2c_read() - read from TPM register
  * @addr: register address to read from
@@ -67,7 +88,7 @@ static const char * const chip_name[] = {
  *
  * Return -EIO on error, 0 on success.
  */
-static int tpm_tis_i2c_read(struct udevice *dev, u8 addr, u8 *buffer,
+static int tpm_tis_i2c_read(struct udevice *dev, u16 addr, u8 *buffer,
 			    size_t len)
 {
 	struct tpm_chip *chip = dev_get_priv(dev);
@@ -97,6 +118,8 @@ static int tpm_tis_i2c_read(struct udevice *dev, u8 addr, u8 *buffer,
 				break;  /* success, break to skip sleep */
 		}
 	} else {
+		if (chip->chip_type == NPCT75X)
+			addr = npct75x_addr(addr);
 		/*
 		 * Use a combined read for newer chips.
 		 * Unfortunately the smbus functions are not suitable due to
@@ -136,6 +159,8 @@ static int tpm_tis_i2c_write_generic(struct udevice *dev, u8 addr,
 		buffer = priv->buf;
 		len++;
 		addr = 0;
+	} else if (chip->chip_type == NPCT75X) {
+		addr = npct75x_addr(addr);
 	}
 
 	for (count = 0; count < max_count; count++) {
@@ -503,6 +528,27 @@ static int tpm_tis_i2c_cleanup(struct udevice *dev)
 	return 0;
 }
 
+static int tpm_tis_i2c_wait_init(struct udevice *dev, unsigned long stop)
+{
+	unsigned long start;
+	u8 access;
+	int rc;
+
+	start = get_timer(0);
+	do {
+		rc = tpm_tis_i2c_read(dev, TPM_ACCESS(0), &access, 1);
+		if (rc < 0)
+			return rc;
+
+		if (access & TPM_ACCESS_VALID)
+			return 0;
+
+		mdelay(TPM_TIMEOUT_MS);
+	} while (get_timer(start) < stop);
+
+	return -ETIMEDOUT;
+}
+
 static int tpm_tis_i2c_init(struct udevice *dev)
 {
 	struct tpm_chip *chip = dev_get_priv(dev);
@@ -518,6 +564,12 @@ static int tpm_tis_i2c_init(struct udevice *dev)
 	chip->timeout_c = TIS_SHORT_TIMEOUT_MS;
 	chip->timeout_d = TIS_SHORT_TIMEOUT_MS;
 
+	if (chip->chip_type == NPCT75X) {
+		rc = tpm_tis_i2c_wait_init(dev, chip->timeout_b);
+		if (rc)
+			return rc;
+	}
+
 	rc = tpm_tis_i2c_request_locality(dev, 0);
 	if (rc < 0)
 		return rc;
@@ -528,22 +580,33 @@ static int tpm_tis_i2c_init(struct udevice *dev)
 		return -EIO;
 	}
 
-	if (chip->chip_type == SLB9635) {
-		vendor = be32_to_cpu(vendor);
-		expected_did_vid = TPM_TIS_I2C_DID_VID_9635;
-	} else {
-		/* device id and byte order has changed for newer i2c tpms */
-		expected_did_vid = TPM_TIS_I2C_DID_VID_9645;
-	}
+	if (chip->chip_type == NPCT75X) {
+		if (tpm_tis_i2c_read(dev, TPM_RID(0), &chip->rid, 1) < 0) {
+			tpm_tis_i2c_release_locality(dev, 0, 1);
+			return -EIO;
+		}
 
-	if (chip->chip_type != UNKNOWN && vendor != expected_did_vid) {
-		pr_err("Vendor id did not match! ID was %08x\n", vendor);
-		return -ENODEV;
+		debug("1.0 TPM (chip type %s device-id 0x%X rid 0x%X)\n",
+			  chip_name[chip->chip_type], vendor, chip->rid);
+	} else {
+		if (chip->chip_type == SLB9635) {
+			vendor = be32_to_cpu(vendor);
+			expected_did_vid = TPM_TIS_I2C_DID_VID_9635;
+		} else {
+			/* device id and byte order has changed for newer i2c tpms */
+			expected_did_vid = TPM_TIS_I2C_DID_VID_9645;
+		}
+
+		if (chip->chip_type != UNKNOWN && vendor != expected_did_vid) {
+			pr_err("Vendor id did not match! ID was %08x\n", vendor);
+			return -ENODEV;
+		}
+
+		debug("1.2 TPM (chip type %s device-id 0x%X)\n",
+			  chip_name[chip->chip_type], vendor >> 16);
 	}
 
 	chip->vend_dev = vendor;
-	debug("1.2 TPM (chip type %s device-id 0x%X)\n",
-	      chip_name[chip->chip_type], vendor >> 16);
 
 	/*
 	 * A timeout query to TPM can be placed here.
@@ -588,6 +651,12 @@ static int tpm_tis_get_desc(struct udevice *dev, char *buf, int size)
 	if (size < 50)
 		return -ENOSPC;
 
+	if (chip->chip_type == NPCT75X)
+		return snprintf(buf, size,
+						"1.0 TPM (%s, chip type %s device-id 0x%x rid 0x%x)",
+						chip->is_open ? "open" : "closed",
+						chip_name[chip->chip_type], chip->vend_dev, chip->rid);
+
 	return snprintf(buf, size, "1.2 TPM (%s, chip type %s device-id 0x%x)",
 			chip->is_open ? "open" : "closed",
 			chip_name[chip->chip_type],
@@ -600,6 +669,11 @@ static int tpm_tis_i2c_probe(struct udevice *dev)
 	struct tpm_chip *chip = dev_get_priv(dev);
 
 	chip->chip_type = dev_get_driver_data(dev);
+
+	if (chip->chip_type == NPCT75X) {
+		uc_priv->pcr_count = 24;
+		uc_priv->pcr_select_min = 3;
+	}
 
 	/* TODO: These need to be checked and tuned */
 	uc_priv->duration_ms[TPM_SHORT] = TIS_SHORT_TIMEOUT_MS;
@@ -622,6 +696,7 @@ static const struct tpm_ops tpm_tis_i2c_ops = {
 static const struct udevice_id tpm_tis_i2c_ids[] = {
 	{ .compatible = "infineon,slb9635tt", .data = SLB9635 },
 	{ .compatible = "infineon,slb9645tt", .data = SLB9645 },
+	{ .compatible = "nuvoton,npct75x", .data = NPCT75X },
 	{ }
 };
 
