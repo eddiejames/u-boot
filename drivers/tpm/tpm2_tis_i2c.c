@@ -30,9 +30,31 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Number of wait states to wait for */
 #define TPM_WAIT_STATES 100
 
+static u8 tpm_tis_i2c_addr(u16 addr)
+{
+	addr &= 0xFFF;
+
+	switch (addr) {
+		// adapt register addresses that have changed compared to
+		// older TIS versions
+	case TPM_ACCESS(0):
+		return 0x04;
+	case 0x04:
+		return 0x00;
+	case TPM_DID_VID(0):
+		return 0x48;
+	case TPM_RID(0):
+		return 0x4C;
+	default:
+		return addr;
+	}
+}
+
 static int tpm_tis_i2c_read(struct udevice *dev, u16 addr, u8 *in, u16 len)
 {
+	u8 reg = tpm_tis_i2c_addr(addr);
 
+	return dm_i2c_read(dev, reg, in, len);
 }
 
 static int tpm_tis_i2c_read32(struct udevice *dev, u32 addr, u32 *result)
@@ -50,7 +72,9 @@ static int tpm_tis_i2c_read32(struct udevice *dev, u32 addr, u32 *result)
 static int tpm_tis_i2c_write(struct udevice *dev, u16 addr, const u8 *out,
 							 u16 len)
 {
+	u8 reg = tpm_tis_i2c_addr(addr);
 
+	return dm_i2c_write(dev, reg, out, len);
 }
 
 static int tpm_tis_i2c_check_locality(struct udevice *dev, int loc)
