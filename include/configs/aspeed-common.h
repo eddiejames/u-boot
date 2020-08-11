@@ -11,6 +11,7 @@
 
 #include <asm/arch/platform.h>
 
+#define CONFIG_SUPPORT_EMMC_BOOT	1
 #define CONFIG_BOOTFILE		"all.bin"
 
 #define CONFIG_GATEWAYIP	192.168.0.1
@@ -65,7 +66,7 @@
 #endif
 
 #ifndef CONFIG_ENV_OFFSET
-#define CONFIG_ENV_OFFSET		0xF0000
+#define CONFIG_ENV_OFFSET		0xe0000
 #endif
 
 #define CONFIG_ENV_SECT_SIZE	(4 << 10)
