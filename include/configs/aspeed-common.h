@@ -75,3 +75,5 @@
  */
 #define PHY_ANEG_TIMEOUT		800
 #endif	/* __ASPEED_COMMON_CONFIG_H */
+
+#define CONFIG_SUPPORT_EMMC_BOOT
