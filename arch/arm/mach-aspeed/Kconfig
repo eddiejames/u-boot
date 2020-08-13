@@ -83,6 +83,12 @@ config ASPEED_UBOOT_SPI_SIZE
 	  The size in bytes of the U-Boot image in
 	  the memory mapped SPI space
 
+config ASPEED_UBOOT_MMC_PART
+	hex "U-Boot eMMC partition"
+	default 0x0
+	help
+	  The partition
+
 config ASPEED_UBOOT_MMC_BASE
 	hex "U-Boot eMMC base block"
 	default 0x0
