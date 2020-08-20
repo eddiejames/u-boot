@@ -9,6 +9,9 @@
  * Michal Simek <michal.simek@xilinx.com>
  * Stefan Agner <stefan.agner@toradex.com>
  */
+
+#define DEBUG
+
 #include <common.h>
 #include <binman_sym.h>
 #include <mapmem.h>
