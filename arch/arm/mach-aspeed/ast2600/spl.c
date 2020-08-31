@@ -18,6 +18,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define AST_BOOTMODE_UART	2
 
 u32 aspeed_bootmode(void);
+void aspeed_mmc_init(void);
 
 void board_init_f(ulong dummy)
 {
@@ -26,6 +27,7 @@ void board_init_f(ulong dummy)
 	timer_init();
 	preloader_console_init();
 	dram_init();
+	aspeed_mmc_init();
 #endif
 }
 
@@ -65,13 +67,6 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	if (aspeed_bl2_verify((void*)spl_image->entry_point, CONFIG_SPL_TEXT_BASE) != 0)
 		hang();
 	image_entry();
-}
-#endif
-
-#ifdef CONFIG_SPL_MMC_SUPPORT
-u32 spl_boot_mode(const u32 boot_device)
-{
-	return MMCSD_MODE_RAW;
 }
 #endif
 

@@ -8,6 +8,7 @@
 #include <timer.h>
 #include <asm/io.h>
 #include <asm/arch/timer.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <dm/uclass.h>
 
@@ -110,3 +111,74 @@ int arch_early_init_r(void)
 	return 0;
 }
 
+union ast2600_pll_reg {
+	unsigned int w;
+	struct {
+		unsigned int m : 13;		/* bit[12:0]	*/
+		unsigned int n : 6;		/* bit[18:13]	*/
+		unsigned int p : 4;		/* bit[22:19]	*/
+		unsigned int off : 1;		/* bit[23]	*/
+		unsigned int bypass : 1;	/* bit[24]	*/
+		unsigned int reset : 1;		/* bit[25]	*/
+		unsigned int reserved : 6;	/* bit[31:26]	*/
+	} b;
+};
+
+void aspeed_mmc_init(void)
+{
+	u32 reset_bit;
+	u32 clkstop_bit;
+	u32 clkin = 25000000;
+	u32 pll_reg = 0;
+	u32 enableclk_bit;
+	u32 rate = 0;
+	u32 div = 0;
+	u32 i = 0;
+	u32 mult;
+	u32 clk_sel = readl(0x1e6e2300);
+
+	/* check whether boot from eMMC is enabled */
+	if ((readl(0x1e6e2500) & 0x4) == 0)
+		return;
+
+	/* disable eMMC boot controller engine */
+	*(volatile int *)0x1e6f500C &= ~0x90000000;
+	/* set pinctrl for eMMC */
+	*(volatile int *)0x1e6e2400 |= 0xff000000;
+
+	/* clock setting for eMMC */
+	enableclk_bit = BIT(15);
+
+	reset_bit = BIT(16);
+	clkstop_bit = BIT(27);
+	writel(reset_bit, 0x1e6e2040);
+	udelay(100);
+	writel(clkstop_bit, 0x1e6e2084);
+	mdelay(10);
+	writel(reset_bit, 0x1e6e2044);
+
+	pll_reg = readl(0x1e6e2220);
+	if (pll_reg & BIT(24)) {
+		/* Pass through mode */
+		mult = div = 1;
+	} else {
+		/* F = 25Mhz * [(M + 2) / (n + 1)] / (p + 1) */
+		union ast2600_pll_reg reg;
+		reg.w = pll_reg;
+		mult = (reg.b.m + 1) / (reg.b.n + 1);
+		div = (reg.b.p + 1);
+	}
+	rate = ((clkin * mult)/div);
+
+	for(i = 0; i < 8; i++) {
+		div = (i + 1) * 2;
+		if ((rate / div) <= 200000000)
+			break;
+	}
+
+	clk_sel &= ~(0x7 << 12);
+	clk_sel |= (i << 12) | BIT(11);
+	writel(clk_sel, 0x1e6e2300);
+
+	setbits_le32(0x1e6e2300, enableclk_bit);
+}

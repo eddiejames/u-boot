@@ -11,6 +11,8 @@
 
 #include <asm/arch/platform.h>
 
+#define CONFIG_SUPPORT_EMMC_BOOT
+
 #define CONFIG_BOOTFILE		"all.bin"
 
 #define CONFIG_GATEWAYIP	192.168.0.1
@@ -40,6 +42,7 @@
 
 #define CONFIG_SYS_BOOTMAPSZ		(256 * 1024 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(32 << 20)
+#define CONFIG_SYS_MONITOR_LEN		0xD0000
 
 /*
  * BOOTP options

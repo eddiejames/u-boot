@@ -13,7 +13,7 @@ _start:
 #ifdef CONFIG_SPL_BUILD
 	.word	0x0	/* Key location */
 	.word	0x0	/* start address of image */
-	.word	0X0	/* image size */
+	.word	0Xfc00	/* image size 63KB */
 	.word	0x0	/* signature address */
 	.word	0x0	/* header revision ID low */
 	.word	0x0	/* header revision ID high */
