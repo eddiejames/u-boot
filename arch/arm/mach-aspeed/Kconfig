@@ -90,6 +90,13 @@ config ASPEED_UBOOT_MMC_BASE
 	  The base block number of the U-Boot
 	  image in the eMMC device
 
+config ASPEED_UBOOT_MMC_PART
+	int "U-Boot eMMC partition"
+	default 0
+	help
+	  The partition number of the U-Boot
+	  image in the eMMC device
+
 config ASPEED_UBOOT_MMC_SIZE
 	hex "U-Boot eMMC size in blocks"
 	default 0x0
