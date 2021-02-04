@@ -115,24 +115,8 @@
 		compatible = "spi-flash", "sst,w25q256";
 		status = "okay";
 		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-	};
-
-	flash@1 {
-		compatible = "spi-flash", "sst,w25q256";
-		status = "okay";
-		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-	};
-
-	flash@2 {
-		compatible = "spi-flash", "sst,w25q256";
-		status = "okay";
-		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <2>;
+		spi-rx-bus-width = <2>;
 	};
 };
 
@@ -148,63 +132,17 @@
 		compatible = "spi-flash", "sst,w25q256";
 		status = "okay";
 		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-	};
-
-	flash@1 {
-		compatible = "spi-flash", "sst,w25q256";
-		status = "okay";
-		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-	};
-};
-
-&spi2 {
-	status = "okay";
-
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_spi2_default &pinctrl_spi2cs1_default
-			&pinctrl_spi2cs2_default &pinctrl_spi2quad_default>;
-
-	flash@0 {
-		compatible = "spi-flash", "sst,w25q256";
-		status = "okay";
-		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-	};
-
-	flash@1 {
-		compatible = "spi-flash", "sst,w25q256";
-		status = "okay";
-		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-	};
-
-	flash@2 {
-		compatible = "spi-flash", "sst,w25q256";
-		status = "okay";
-		spi-max-frequency = <50000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <2>;
+		spi-rx-bus-width = <2>;
 	};
 };
 
 &emmc_slot0 {
 	status = "okay";
 
-#if 1
 	bus-width = <4>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_emmc_default>;
-#else
-	bus-width = <8>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_emmcg8_default>;
-#endif
 };
 
 &sdhci_slot0 {
@@ -258,32 +196,4 @@
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c9_default>;
-};
-
-#if 0
-&pcie_bridge0 {
-	status = "okay";
-};
-#endif
-
-&pcie_bridge1 {
-	status = "okay";
-};
-
-&h2x {
-	status = "okay";
-};
-
-#if 0
-&fsim0 {
-	status = "okay";
-};
-
-&fsim1 {
-	status = "okay";
-};
-#endif
-
-&ehci1 {
-	status = "okay";
 };
