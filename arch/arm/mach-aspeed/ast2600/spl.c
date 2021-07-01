@@ -48,37 +48,21 @@ void spl_board_init(void)
 u32 spl_boot_device(void)
 {
 #if IS_ENABLED(CONFIG_ASPEED_LOADERS)
-	switch (aspeed_bootmode()) {
-	case AST_BOOTMODE_EMMC:
-		return (IS_ENABLED(CONFIG_ASPEED_SECURE_BOOT))?
-			ASPEED_SECBOOT_DEVICE_MMC : ASPEED_BOOT_DEVICE_MMC;
-	case AST_BOOTMODE_SPI:
-		return (IS_ENABLED(CONFIG_ASPEED_SECURE_BOOT))?
-			ASPEED_SECBOOT_DEVICE_RAM : ASPEED_BOOT_DEVICE_RAM;
-	case AST_BOOTMODE_UART:
-		return (IS_ENABLED(CONFIG_ASPEED_SECURE_BOOT))?
-			ASPEED_SECBOOT_DEVICE_UART : ASPEED_BOOT_DEVICE_UART;
-	default:
-		break;
-	}
+	return (IS_ENABLED(CONFIG_ASPEED_SECURE_BOOT))?
+		ASPEED_SECBOOT_DEVICE_MMC : ASPEED_BOOT_DEVICE_MMC;
 #else
-	switch (aspeed_bootmode()) {
-	case AST_BOOTMODE_EMMC:
-		return BOOT_DEVICE_MMC1;
-	case AST_BOOTMODE_SPI:
-		return BOOT_DEVICE_RAM;
-	case AST_BOOTMODE_UART:
-		return BOOT_DEVICE_UART;
-	}
+	return BOOT_DEVICE_MMC1;
 #endif
-
-	return BOOT_DEVICE_NONE;
 }
 
 void board_boot_order(u32 *spl_boot_list)
 {
 	spl_boot_list[0] = spl_boot_device();
+#if IS_ENABLED(CONFIG_ASPEED_LOADERS)
 	spl_boot_list[1] = ASPEED_BOOT_DEVICE_UART;
+#else
+	spl_boot_list[1] = BOOT_DEVICE_UART;
+#endif
 }
 
 #ifdef CONFIG_SPL_OS_BOOT
